@@ -8,8 +8,11 @@
 // module scaffoleding
 const handler = {};
 
-handler.notFoundHandler = () => {
-  console.log("Not Found");
+handler.notFoundHandler = (requestPropertiers, callback) => {
+  console.log(requestPropertiers);
+  callback(404, {
+    message: "Your requested URL was not found!",
+  });
 };
 
 module.exports = handler;

@@ -8,8 +8,11 @@
 // module scaffoleding
 const handler = {};
 
-handler.sampleHandler = () => {
-  console.log("Sample");
+handler.sampleHandler = (requestPropertiers, callback) => {
+  console.log(requestPropertiers);
+  callback(200, {
+    message: "This is a sample url",
+  });
 };
 
 module.exports = handler;

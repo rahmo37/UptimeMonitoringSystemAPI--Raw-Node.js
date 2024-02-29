@@ -1,0 +1,62 @@
+/**
+ * Title: Compliler explanation
+ * Description: In this file i explain how compiler reads the code
+ * Author: Obaedur Rahman
+ * Date: 18-Feb-2024
+ */
+- The application starts at app.createServer at the index.js.
+- What is app? app is an empty object the start.
+- Does it have a createServer function? yes. it has an anonymous function
+- inside the anonymous function a const variable server is present, which has the createServer server function of the http module.
+- is the http module imported? yes. the http module is imported and saved in a variable called http.
+- in the createServer method we are passing app.handleReqRes as a callback
+- does the app has an handleReqRes function?
+- yes, app.handleReqRes is explicitly added which takes the handleReqRes function imported from the /helpers/handleReqRes. and saved in the { handleReqRes } variable.
+- is there a helper folder and in it, is there a handleReqRes.js file?
+- yes there is. this file exports the handler object, which has the handlerReqRes function, explicitly added.
+- okay lets go back to index.js, what is the line after the http.createServer(app.handleReqRes);
+- the variable server which has the new server instance
+- next calling the server.listen method and setting the port to evironment.port,
+- environment object comes from /helpers/environments module
+- helper folder has a file called environment.js
+- which exports environmentToExport, lets see how environmentToExport is set.
+- environment object at the top starts as an empty object, then explcitly an anonymous obaject is added to the environment object and named it staging
+- staging has two properties port=3000 and envName="staging"
+- another object is added which is called the production, which also has a port=3000 and envName="production" properties.
+
+- then there is a variable called currentEnvironment, where we set which environment to get from the environment object declared at the top. we see if there is an environmentVariable called NODE_ENV is set, if there is we check if the value that is set inside the NODE_ENV is a string. if it is a string, we leave it as it is. 
+- if there is not object called NODE_ENV, the return value is undefined, and we try to compare it with the "string", which evaluates to false, therefore we set the string "staging" as the default value of the currentEnvironment.
+
+- then we come to the environmentToExport variable, we check if the currentEnvironment's value (either statging or production) is available inside the environment object. if environments[currentEnvironment] returns an obejct we compare its type with the string called "object", we also check if the value returned from the environments[currentEnvironment] is null. if not null and the type of string matches to "object", we set the environmentToExport to the returned environment object, either staging or production.
+- if null or the type of does not match with the string "object", we by default set the current environmentToExport to environments.staging;
+- finally we export environmentToExport
+- going back to index.js, so depending on the object returned from the environments module we set its port to the listen method, and in the callback we just console.log the current port number. The server is now starts listening for any request...
+- now lets say when a request is made to the server what happens.
+- When a request is made the callback function in the app.handleReqRes is called.
+- lets see what is happening in the handlerReqRes function that was imported from the handler module.
+- handlerReqRes is a function of handler function, which begins as an empty object.
+- the handleReqRes function is explicitly added later.
+- the handleReqRes function works with the request object made by the user, processes that request and sends a response accordingly. the req parameter holds the actual request sent by the user, and the res parameter is the response the server will send.
+- in the parsedUrl variable we parse the url from the req parameter. use the url.parse method, which parses the url of the request object. we import the url module and save the url object sent from the url module. we pass the req.url in the first paramtere and true in the second paramter which signifies what we also want to parse the queryStrings
+- from the parsed url we extract the full pathname, and save it inside the path variable
+- then inside the trimmedPath we use the replace method to replace all the backslashes from the beginning and end from the path
+- then we extract the method from the req.method and convert it into toLowerCase
+- from the parsedUrl we extract the query object and save it in the queryStringObject variable, so that we can use that variable later
+- in the headerObj variable we save all the headers using req.headers;
+- then in the requestProperties object we gather all the properties we extracted from the parsedUrl and the Rew object
+- next we create a decoder instance from the StringDecoder module we've imported before. use utf-8 to set the encoder 
+- then we create a data variable with empty string in it, this is where we will save all the payload came with the user request, if any
+- Then we declare another variable called the chosenHandler, where in the route object we've imported before we pass the trimmedPath.
+- now inside this route module we have a routes object, where it has a property called sample with a function as a value called sampleHandler. 
+- sampleHandler is another module inside the Handlers folder, inside that we have another folder called routesHandler where we have the sampleHandler module. it has a handler object which has a sampleHandler function, it has a custom callback function that takes a requestProperties obejct, and a callback function, which we set inside this function. inside we send we configure the callback function, it retirns the port and just a message "This is a sample handler"
+- coming back to routes object in the routes.js, the sample property is now set as a call back function coming from the sampleHandlers module, when the trimmedPath is set to sample, the sampleHandler call back function will be called and it will return 200 and an object with the message "This is a sample handler".
+- then finally we export the routes module.
+- coming back inside the chosenHandler variable since we have the routes object available to us, we can check if the trimmedPath is set to sample, if not we call the notFoundHandler which is a similar kind of module, that exports the notFoundHandler which is also a custom callback function which takes the requestObject and has a callback function, which returns the statusCode and payload parameter.
+- then we start reading the data. on each data event, when a buffer is sent we decode the buffer using the decoder.write() method. we pass the buffer object inside the write method. now the write method decodes the buffer into a string and we save/append that string data inside the data variable that we've declared before.
+- then we listen for the end event, where after the request is ends we append the last bit of data inside the data variable, using the decoder.end();
+- now when the requst has ended, we call our chosenHandler() function, we pass the requestProperties Object which has all the required information needed for the handlers to process the request and send a response, after we send the requestProperties object, the appropriate handler sends the statusCode and the payload which is the response sent by the server as a callback function.
+- inside the callback function we validate the statusCode and the payload, see if the statusCode is a valid number, if not we set the status code to 500, and if the payload is not sent as an obecjt we set it to an empty object.
+- then we stringify the payload object and save it inside the payLoadString variable
+- finally using the res obejct in the header we write the statusCode using the res.writeHead() and in the res.end() we write send the payLoadString as a return
+- finally we export the handler obejct which handled the whole req and res
+

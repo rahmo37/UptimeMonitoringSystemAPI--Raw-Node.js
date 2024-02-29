@@ -65,47 +65,81 @@ handler.handleReqRes = (req, res) => {
   // ^\/+ matches one or more slashes at the beginning of the string.
   // \/+$ matches one or more slashes at the end of the string.
   // g is a flag for global search, meaning it will replace all matches found in the string, not just the first one.
-  const trimmedPath = parsedUrl.pathname.replace(/^\/+|\/+$/g, "");
 
-  // parsing the method used to sed the request
+  // This is full path
+  const path = parsedUrl.pathname;
+
+  // This is trimmed path
+  const trimmedPath = path.replace(/^\/+|\/+$/g, "");
+
+  // parsing the method used to send the request
   const method = req.method.toLowerCase();
 
   // grabbing the queryString object, which has all the query strings
-  const queryString = parsedUrl.query;
+  const queryStringObject = parsedUrl.query;
 
   // *Headers
   // When an HTTP request is sent, headers are key-value pairs sent between the client and server, which provide essential information about the request or response. Headers can include metadata such as the type of web browser being used, the types of data the client can accept, the size of the request body, and authentication information, among others. These headers help the server understand how to process the request and format the response
 
   // req.headers property returns the header object sent by the user's request
   const headerObj = req.headers;
+  console.log(headerObj);
 
   // *Request body or payload
   // The request body, or payload, in an HTTP request is the part of the request that contains the actual data being sent to the server. This data can represent content you want to upload or submit to the server, such as form data, file uploads, or JSON objects in the case of API requests. The request body is used with request methods that submit data to the server, like POST, PUT, and PATCH, allowing the client to send structured information to the server. The presence and structure of the request body are usually described by the request headers, with Content-Type indicating the type of data being sent (e.g., application/json, multipart/form-data) and Content-Length indicating the size of the data in bytes. The request body is essential for operations that involve creating or updating resources on the server
+
+  // We gather all the request information inside an object then send it in the chosenHandler function so that the corresponding methods can utilize them
+
+  const requestProperties = {
+    // This shorthand syntax automatically uses the variable name as the key and its value as the property value
+    parsedUrl,
+    path,
+    trimmedPath,
+    method,
+    queryStringObject,
+    headerObj,
+  };
 
   // Lets use an instance of the stringDecoder class
   const decoder = new StringDecoder("utf-8");
   let data = "";
 
-  // Checking is the route exists in the route module, if it doesnot we call the not found method
+  // Checking if the route exists in the route module, if it doesnot we call the not found method
   const chosenHandler = routes[trimmedPath]
     ? routes[trimmedPath]
     : notFoundHandler;
 
-  // !Start From here... Revise and verbally explain what you've done in the previous lesson then continue from, 47:00
-
+  // Everytime a buffer object is sent we writing it in the data
   req.on("data", (buffer) => {
     data += decoder.write(buffer);
   });
 
+  // The end event signifies the end of the request, regardless of whether any data was transmitted as part of the request body.
   req.on("end", () => {
     // *data += decoder.end(); why do we append decoder.end() in the data?
     // data += decoder.end(); ensures that your decoded data string is complete and includes any final characters that were only partially received before the stream ended. This step is essential for accurately representing the original data, especially when dealing with text that includes multi-byte characters.
     data += decoder.end();
 
-    console.log(data);
-    // handle response
-    res.end("Data read finished!");
+    // Sending the requestProperties object in the chosenHandler function, now depending on the validation the chosenHandler function could be any handler, notfoundHandler or aboutHandler or any other. Each handler is going to process the requestPropertiers object given in the parameter and the return a callback function with statusCode and payload(processed the request), which we will implement later
+    chosenHandler(requestProperties, (statusCode, payload) => {
+      statusCode = typeof statusCode === "number" ? statusCode : 500;
+      payload = typeof payload === "object" ? payload : {};
+
+      // Making the object a string
+      const payloadString = JSON.stringify(payload);
+
+      // finally we return the the final response
+
+      // The res.writeHead(statusCode) method in Node.js is used to send a response header to the request client. It sets the HTTP status code of the response. For example, 200 for a successful request, 404 for not found, etc. This method must be called before sending any actual content with res.write() or res.end(). It prepares the client to receive the type of response specified by the status code.
+
+      // Sending the header type as application/json
+      res.setHeader(`Content-Type`, `application/json`);
+      res.writeHead(statusCode);
+      res.end(payloadString);
+    });
   });
 };
 
 module.exports = handler;
+
+//! Verbelly explain where your project is standing now and move to the second part
